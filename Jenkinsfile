@@ -1,8 +1,5 @@
 pipeline {
-  agent { label 'linux' }
-  options {
-    buildDiscarder(logRotator(numToKeepStr: '5'))
-  }
+  
   environment {
      registry = "marcent/java-app" 
      registryCredential = 'token-jenkins'
