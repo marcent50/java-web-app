@@ -5,41 +5,85 @@ pipeline {
   }
   environment {
      registry = "marcent/java-app" 
-    registryCredential = 'token-jenkins'
+     registryCredential = 'token-jenkins'
+     dockerImage = '' 
   }
   parameters { 
     string(name: 'APP_NAME', defaultValue: '', description: 'What is the Heroku app name?') 
   }
-  stages {
-    stage('Build') {
-      steps {
-        sh 'docker build -t darinpope/java-web-app:latest .'
-      }
+agent any 
+
+stages { 
+
+    stage('Cloning our Git') { 
+
+        steps { 
+
+            git 'https://github.com/marcent50/Docker_1.git' 
+
+        }
+
+    } 
+    
+     stage('Initialize') {
+         
+        steps{
+            
+            script {
+                
+                  def dockerHome = tool 'mydocker'
+                   
+                env.PATH = "${dockerHome}/bin:${env.PATH}"
+                
+                }
+
+        } 
+
     }
-    stage('Login') {
-      steps {
-        sh 'echo $HEROKU_API_KEY | docker login --username=_ --password-stdin registry.heroku.com'
-      }
+
+    stage('Building our image') { 
+
+        steps { 
+
+            script { 
+
+                dockerImage = docker.build registry + ":$BUILD_NUMBER"
+
+            }
+
+        } 
+
     }
-    stage('Push to Heroku registry') {
-      steps {
-        sh '''
-          docker tag darinpope/java-web-app:latest registry.heroku.com/$APP_NAME/web
-          docker push registry.heroku.com/$APP_NAME/web
-        '''
-      }
-    }
-    stage('Release the image') {
-      steps {
-        sh '''
-          heroku container:release web --app=$APP_NAME
-        '''
-      }
-    }
-  }
-  post {
-    always {
-      sh 'docker logout'
-    }
-  }
+    
+   
+        stage('Deploy our image') { 
+
+        steps { 
+
+            script { 
+
+                docker.withRegistry( '', registryCredential ) {
+
+                    dockerImage.push() 
+
+                }
+
+            } 
+
+        }
+
+    } 
+    
+
+    stage('Cleaning up') { 
+
+        steps { 
+
+            sh "docker rmi $registry:$BUILD_NUMBER" 
+
+        }
+
+    } 
+
+}
 }
