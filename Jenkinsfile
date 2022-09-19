@@ -1,5 +1,6 @@
 pipeline {
- agent { label 'linux' }
+ 
+agent any 
   options {
     buildDiscarder(logRotator(numToKeepStr: '5'))
   } 
@@ -11,8 +12,8 @@ pipeline {
   parameters { 
     string(name: 'APP_NAME', defaultValue: '', description: 'What is the Heroku app name?') 
   }
-agent any 
 
+agent any 
 stages { 
 
     stage('Cloning our Git') { 
